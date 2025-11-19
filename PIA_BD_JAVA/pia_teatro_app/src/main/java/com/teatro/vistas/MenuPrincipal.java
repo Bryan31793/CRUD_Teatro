@@ -1,190 +1,249 @@
 package com.teatro.vistas;
 
 import javax.swing.*;
-import java.awt.Font;
-import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.awt.event.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class MenuPrincipal extends JFrame {
 
-    // --- Variables de Sesión del Usuario ---
+    // --- Colores del tema ---
+    private static final Color COLOR_FONDO = new Color(30, 41, 82);
+    private static final Color COLOR_DORADO = new Color(255, 193, 7);
+    private static final Color COLOR_PANEL = new Color(45, 55, 100);
+    private static final Color COLOR_CARD = new Color(55, 65, 110);
+    private static final Color COLOR_TEXTO = Color.WHITE;
+    private static final Color COLOR_HOVER = new Color(255, 215, 0);
+
+    // --- Variables de Sesión ---
     private int idEmpleadoLogueado;
     private int idRolLogueado;
+    private String nombreEmpleado;
 
-    // --- Componentes del Menú ---
-    private JButton btnVenderBoletos;
-    private JButton btnReportes;
-    private JButton btnAdminFunciones;
-    private JButton btnGestionarEmpleados; // <-- NUEVO BOTÓN
-    private JButton btnAgregarObras;    // < -- nueva funcionalidad
-    private JLabel lblBienvenido;
+    // --- Componentes ---
+    private JPanel panelSuperior;
+    private JPanel panelContenido;
+    private JLabel lblBienvenida;
+    private JLabel lblHora;
+    private JButton btnCerrarSesion;
+    private Timer reloj;
 
-    /**
-     * Constructor que recibe los datos del usuario desde el Login.
-     * @param idEmpleado El ID del empleado que inició sesión.
-     * @param idRol El ID del rol (1=Vendedor, 2=Admin, 3=Director).
-     */
-    public MenuPrincipal(int idEmpleado, int idRol) {
+    public MenuPrincipal(int idEmpleado, int idRol, String nombreEmpleado) {
         this.idEmpleadoLogueado = idEmpleado;
         this.idRolLogueado = idRol;
+        this.nombreEmpleado = nombreEmpleado;
 
-        // --- Configuración de la Ventana Principal ---
-        setTitle("Menú Principal - Sistema de Teatro PIA");
-        setSize(800, 600);
+        // --- Configuración de la ventana ---
+        setTitle("Sistema de Teatro FCFM - Menú Principal");
+        setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(null);
-        getContentPane().setBackground(new Color(45, 45, 45)); // Fondo oscuro
+        setLayout(new BorderLayout());
+        getContentPane().setBackground(COLOR_FONDO);
 
-        // --- Componentes ---
-        lblBienvenido = new JLabel("Bienvenido al Sistema de Teatro");
-        lblBienvenido.setFont(new Font("Arial", Font.BOLD, 24));
-        lblBienvenido.setForeground(Color.WHITE);
-        lblBienvenido.setBounds(200, 30, 400, 30);
-        add(lblBienvenido);
+        // --- Panel Superior (Header) ---
+        crearPanelSuperior();
 
-        // Botón 1: Vender Boletos
-        btnVenderBoletos = new JButton("Vender Boletos");
-        btnVenderBoletos.setBounds(300, 100, 200, 50);
-        btnVenderBoletos.setFont(new Font("Arial", Font.PLAIN, 16));
-        add(btnVenderBoletos);
+        // --- Panel de Contenido (Menú de opciones) ---
+        crearPanelContenido();
 
-        // Botón 2: Ver Reportes
-        btnReportes = new JButton("Ver Reportes");
-        btnReportes.setBounds(300, 170, 200, 50); // Ajuste de posición
-        btnReportes.setFont(new Font("Arial", Font.PLAIN, 16));
-        add(btnReportes);
-        
-        // Botón 3: Administrar Funciones (Crear/Editar)
-        btnAdminFunciones = new JButton("Administrar Funciones");
-        btnAdminFunciones.setBounds(300, 240, 200, 50); // Ajuste de posición
-        btnAdminFunciones.setFont(new Font("Arial", Font.PLAIN, 16));
-        add(btnAdminFunciones);
-
-        // Botón 4: Gestionar Empleados (NUEVO)
-        btnGestionarEmpleados = new JButton("Gestionar Empleados");
-        btnGestionarEmpleados.setBounds(300, 310, 200, 50); // Ajuste de posición
-        btnGestionarEmpleados.setFont(new Font("Arial", Font.PLAIN, 16));
-        add(btnGestionarEmpleados);
-
-        // boton 5: agregar obras (insertar)
-        btnAgregarObras = new JButton("Agregar Obra");
-        btnAgregarObras.setBounds(300, 380, 200, 50);
-        btnAgregarObras.setFont(new Font("Arial", Font.PLAIN, 16));
-        add(btnAgregarObras);
-
-        // --- LÓGICA DE ROLES (El requisito clave) ---
-        aplicarPermisos(idRol);
-
-        // --- Acción para el botón Vender Boletos ---
-        btnVenderBoletos.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                abrirModuloVenta();
-            }
-        });
-        
-        // --- Acción para el botón Ver Reportes ---
-        btnReportes.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                abrirModuloReportes();
-            }
-        });
-        
-        // --- Acción para el botón Admin Funciones ---
-        btnAdminFunciones.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                abrirModuloAdminFunciones();
-            }
-        });
-
-        btnGestionarEmpleados.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                abrirModuloEmpleados();
-            }
-        });
-
-        // accion para el boton Agregar obra
-        btnAgregarObras.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                abrirModuloObras();
-            }
-        });
-
-
+        // --- Iniciar reloj ---
+        iniciarReloj();
     }
 
-    /**
-     * Muestra u oculta botones basado en el ID del Rol.
-     * @param idRol El rol del usuario.
-     */
-    private void aplicarPermisos(int idRol) {
-        // En tu base de datos:
-        // 1 = Vendedor
-        // 2 = Administrador
-        // 3 = Director
+    private void crearPanelSuperior() {
+        panelSuperior = new JPanel();
+        panelSuperior.setLayout(null);
+        panelSuperior.setPreferredSize(new Dimension(1000, 100));
+        panelSuperior.setBackground(COLOR_PANEL);
+        panelSuperior.setBorder(BorderFactory.createMatteBorder(0, 0, 3, 0, COLOR_DORADO));
 
-        if (idRol == 1) { // Vendedor
-            btnVenderBoletos.setVisible(true);
-            btnReportes.setVisible(false);
-            btnAdminFunciones.setVisible(false);
-            btnGestionarEmpleados.setVisible(false); // No puede gestionar
-            
-        } else if (idRol == 2) { // Administrador
-            btnVenderBoletos.setVisible(true);
-            btnReportes.setVisible(true);
-            btnAdminFunciones.setVisible(true);
-            btnGestionarEmpleados.setVisible(false); // No puede gestionar
-            btnAgregarObras.setVisible(false);
-            
-        } else if (idRol == 3) { // Director
-            
-            // El Director puede hacerlo TODO
-            btnVenderBoletos.setVisible(true);
-            btnReportes.setVisible(true);
-            btnAdminFunciones.setVisible(true);
-            btnGestionarEmpleados.setVisible(true);
-            btnAgregarObras.setVisible(true);
-            
-        } else {
-            // Seguridad por si acaso
-            JOptionPane.showMessageDialog(this, "Rol desconocido. Saliendo.");
-            System.exit(0);
+        // Logo/Ícono
+        JLabel lblLogo = new JLabel("🎭");
+        lblLogo.setFont(new Font("Arial", Font.PLAIN, 48));
+        lblLogo.setBounds(30, 25, 60, 60);
+        panelSuperior.add(lblLogo);
+
+        // Título del sistema
+        JLabel lblTitulo = new JLabel("SISTEMA DE TEATRO FCFM");
+        lblTitulo.setFont(new Font("Arial", Font.BOLD, 24));
+        lblTitulo.setForeground(COLOR_DORADO);
+        lblTitulo.setBounds(100, 20, 400, 30);
+        panelSuperior.add(lblTitulo);
+
+        // Bienvenida con nombre del usuario
+        lblBienvenida = new JLabel("Bienvenido(a), " + nombreEmpleado);
+        lblBienvenida.setFont(new Font("Arial", Font.PLAIN, 14));
+        lblBienvenida.setForeground(COLOR_TEXTO);
+        lblBienvenida.setBounds(100, 55, 300, 25);
+        panelSuperior.add(lblBienvenida);
+
+        // Rol del usuario
+        String nombreRol = obtenerNombreRol(idRolLogueado);
+        JLabel lblRol = new JLabel("Rol: " + nombreRol);
+        lblRol.setFont(new Font("Arial", Font.ITALIC, 12));
+        lblRol.setForeground(new Color(200, 200, 200));
+        lblRol.setBounds(100, 75, 200, 20);
+        panelSuperior.add(lblRol);
+
+        // Reloj
+        lblHora = new JLabel();
+        lblHora.setFont(new Font("Arial", Font.BOLD, 16));
+        lblHora.setForeground(COLOR_TEXTO);
+        lblHora.setBounds(780, 30, 150, 25);
+        panelSuperior.add(lblHora);
+
+        // Botón Cerrar Sesión
+        btnCerrarSesion = new JButton("Cerrar Sesión");
+        btnCerrarSesion.setBounds(780, 60, 180, 35);
+        btnCerrarSesion.setFont(new Font("Arial", Font.BOLD, 12));
+        btnCerrarSesion.setBackground(new Color(220, 53, 69));
+        btnCerrarSesion.setForeground(Color.WHITE);
+        btnCerrarSesion.setFocusPainted(false);
+        btnCerrarSesion.setBorderPainted(false);
+        btnCerrarSesion.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        btnCerrarSesion.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                btnCerrarSesion.setBackground(new Color(200, 35, 51));
+            }
+            @Override
+            public void mouseExited(MouseEvent e) {
+                btnCerrarSesion.setBackground(new Color(220, 53, 69));
+            }
+        });
+        
+        btnCerrarSesion.addActionListener(e -> cerrarSesion());
+        panelSuperior.add(btnCerrarSesion);
+
+        add(panelSuperior, BorderLayout.NORTH);
+    }
+
+    private void crearPanelContenido() {
+        panelContenido = new JPanel();
+        panelContenido.setLayout(new GridLayout(2, 2, 30, 30));
+        panelContenido.setBackground(COLOR_FONDO);
+        panelContenido.setBorder(new EmptyBorder(40, 60, 40, 60));
+
+        // Crear tarjetas según el rol
+        if (idRolLogueado >= 1) { // Todos pueden vender
+            panelContenido.add(crearTarjeta("💳", "Vender Boletos", "Registrar nuevas ventas", e -> abrirModuloVenta()));
+        }
+
+        if (idRolLogueado >= 2) { // Admin y Director
+            panelContenido.add(crearTarjeta("📊", "Ver Reportes", "Consultar estadísticas", e -> abrirModuloReportes()));
+            panelContenido.add(crearTarjeta("🎬", "Administrar Funciones", "Gestionar funciones y precios", e -> abrirModuloAdminFunciones()));
+        }
+
+        if (idRolLogueado == 3) { // Solo Director
+            panelContenido.add(crearTarjeta("👥", "Gestionar Empleados", "Contratar y administrar personal", e -> abrirModuloEmpleados()));
+            //panelContenido.add(crearTarjeta("👥", "Agregar Funcion", "Agregar nuevas funciones", e -> abrirModuloObras()));
+        }
+
+        add(panelContenido, BorderLayout.CENTER);
+    }
+
+    private JPanel crearTarjeta(String icono, String titulo, String descripcion, ActionListener action) {
+        JPanel tarjeta = new JPanel();
+        tarjeta.setLayout(null);
+        tarjeta.setBackground(COLOR_CARD);
+        tarjeta.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(COLOR_DORADO, 2),
+            new EmptyBorder(20, 20, 20, 20)
+        ));
+        tarjeta.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Ícono
+        JLabel lblIcono = new JLabel(icono);
+        lblIcono.setFont(new Font("Arial", Font.PLAIN, 80));
+        lblIcono.setBounds(150, 30, 100, 100);
+        lblIcono.setHorizontalAlignment(SwingConstants.CENTER);
+        tarjeta.add(lblIcono);
+
+        // Título
+        JLabel lblTitulo = new JLabel(titulo);
+        lblTitulo.setFont(new Font("Arial", Font.BOLD, 20));
+        lblTitulo.setForeground(COLOR_DORADO);
+        lblTitulo.setBounds(20, 140, 360, 30);
+        lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
+        tarjeta.add(lblTitulo);
+
+        // Descripción
+        JLabel lblDesc = new JLabel(descripcion);
+        lblDesc.setFont(new Font("Arial", Font.PLAIN, 14));
+        lblDesc.setForeground(new Color(200, 200, 200));
+        lblDesc.setBounds(20, 175, 360, 30);
+        lblDesc.setHorizontalAlignment(SwingConstants.CENTER);
+        tarjeta.add(lblDesc);
+
+        // Efecto hover
+        tarjeta.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                tarjeta.setBackground(new Color(65, 75, 120));
+                tarjeta.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(COLOR_HOVER, 3),
+                    new EmptyBorder(20, 20, 20, 20)
+                ));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                tarjeta.setBackground(COLOR_CARD);
+                tarjeta.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(COLOR_DORADO, 2),
+                    new EmptyBorder(20, 20, 20, 20)
+                ));
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                action.actionPerformed(null);
+            }
+        });
+
+        return tarjeta;
+    }
+
+    private void iniciarReloj() {
+        reloj = new Timer(1000, e -> {
+            LocalDateTime ahora = LocalDateTime.now();
+            DateTimeFormatter formato = DateTimeFormatter.ofPattern("HH:mm:ss");
+            lblHora.setText(ahora.format(formato));
+        });
+        reloj.start();
+    }
+
+    private String obtenerNombreRol(int idRol) {
+        switch (idRol) {
+            case 1: return "Vendedor";
+            case 2: return "Administrador";
+            case 3: return "Director";
+            default: return "Desconocido";
         }
     }
-    
-    /**
-     * Abre la ventana de Venta de Boletos
-     */
+
     private void abrirModuloVenta() {
-        VentaBoletos ventanaVenta = new VentaBoletos(this.idEmpleadoLogueado);
-        ventanaVenta.setVisible(true);
+        VentaBoletos ventana = new VentaBoletos(this.idEmpleadoLogueado);
+        ventana.setVisible(true);
     }
-    
-    /**
-     * Abre la ventana de Reportes
-     */
+
     private void abrirModuloReportes() {
-        VerReportes ventanaReportes = new VerReportes();
-        ventanaReportes.setVisible(true);
+        VerReportes ventana = new VerReportes();
+        ventana.setVisible(true);
     }
-    
-    /**
-     * Abre la ventana de Administración de Funciones
-     */
+
     private void abrirModuloAdminFunciones() {
-        AdminFunciones ventanaAdmin = new AdminFunciones();
-        ventanaAdmin.setVisible(true);
+        AdminFunciones ventana = new AdminFunciones();
+        ventana.setVisible(true);
     }
 
     private void abrirModuloEmpleados() {
-        AdminEmpleados ventanaEmp = new AdminEmpleados();
-        ventanaEmp.setVisible(true);
+        AdminEmpleados ventana = new AdminEmpleados();
+        ventana.setVisible(true);
     }
 
     private void abrirModuloObras() {
@@ -194,4 +253,25 @@ public class MenuPrincipal extends JFrame {
 
     }
 
+
+    private void cerrarSesion() {
+        int confirmacion = JOptionPane.showConfirmDialog(
+            this,
+            "¿Está seguro que desea cerrar sesión?",
+            "Confirmar Cierre de Sesión",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (confirmacion == JOptionPane.YES_OPTION) {
+            if (reloj != null) {
+                reloj.stop();
+            }
+            this.dispose();
+            new Login().setVisible(true);
+        }
+    }
 }
+
+
+

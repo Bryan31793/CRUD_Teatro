@@ -528,7 +528,17 @@ BEGIN
 END$$
 DELIMITER ;
 
+-- =========0====
+
+USE pia_teatro;
+
+-- 1. Modificar tabla Boleto para permitir boletos sin venta
+ALTER TABLE `Boleto` 
+MODIFY COLUMN `Venta_id_venta` INT NULL;
+
+-- 2. Crear el trigger
 -- 17 SP: Insertar en funcion
+
 DELIMITER $$
 
 CREATE PROCEDURE sp_CrearFuncion(
@@ -586,6 +596,8 @@ BEGIN
         p_hora_fun,
         p_id_sala
     );
+    
+    
 
     COMMIT;
 

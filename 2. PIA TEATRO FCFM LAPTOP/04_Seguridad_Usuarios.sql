@@ -44,6 +44,7 @@ GRANT SELECT ON pia_teatro.MetodoPago TO 'app_taquilla'@'localhost';
 GRANT SELECT ON pia_teatro.Asiento TO 'app_taquilla'@'localhost';
 GRANT SELECT ON pia_teatro.Zona TO 'app_taquilla'@'localhost';
 GRANT SELECT ON pia_teatro.Boleto TO 'app_taquilla'@'localhost'; -- (Necesario para ver asientos disponibles)
+GRANT SELECT ON pia_teatro.PrecioZona TO 'app_taquilla'@'localhost';
 
 -- 5. Permiso para que el Login pueda LEER la tabla Empleado
 GRANT SELECT ON pia_teatro.Empleado TO 'app_taquilla'@'localhost';
