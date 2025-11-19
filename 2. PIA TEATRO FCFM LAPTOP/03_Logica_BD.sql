@@ -122,14 +122,9 @@ END$$
 DELIMITER ;
 
 -- -----------------------------------------------------
--- 5. VISTA (v_ReporteVentas)
--- -----------------------------------------------------
--- Propósito: Crea un reporte simple de ventas uniendo las tablas
---            Venta, Cliente, Empleado y Pago.
---            Ideal para el rol de Director.
+-- 5. VISTA (v_ReporteVentas) - ARREGLO FINAL
 -- -----------------------------------------------------
 
--- Primero borramos la vista si existe, para evitar errores
 DROP VIEW IF EXISTS `v_ReporteVentas`;
 
 CREATE VIEW `v_ReporteVentas` AS
@@ -138,18 +133,17 @@ SELECT
     v.fecha_venta AS 'Fecha',
     v.total_venta AS 'Total',
     c.nombre_cliente AS 'Cliente',
-    -- Concatenamos el nombre y apellido del empleado
     CONCAT(e.nombre_e, ' ', e.apellido_e) AS 'Vendido Por',
     mp.tipo AS 'Método de Pago'
 FROM 
     Venta v
 JOIN 
-    Cliente c ON v.Cliente_id_cliente = c.id_cliente
+    Cliente c ON v.Cliente_id_cliente = c.id_cliente  -- Dejamos JOIN (una venta DEBE tener un cliente/empleado)
 JOIN 
     Empleado e ON v.Empleado_id_empleado = e.id_empleado
-JOIN 
+LEFT JOIN -- ¡CAMBIO CLAVE! Una venta debe mostrarse, aunque el Pago falte
     Pago p ON v.id_venta = p.Venta_id_venta
-JOIN 
+LEFT JOIN -- ¡CAMBIO CLAVE!
     MetodoPago mp ON p.MetodoPago_id_metodoPago = mp.id_metodoPago;
     
 -- PROBAMOS VIEW 
@@ -312,13 +306,8 @@ DELIMITER ;
 -- CALL sp_BuscarFuncion(NULL, '2025-12-11');
 
 -- -----------------------------------------------------
--- 10. PROCEDIMIENTO ALMACENADO (sp_RegistrarVenta)
+-- 10. PROCEDIMIENTO ALMACENADO (sp_RegistrarVenta) - ARREGLO FINAL
 -- -----------------------------------------------------
--- Propósito: Este es el SP principal de la aplicación.
---            Registra una venta completa con múltiples boletos
---            dentro de una transacción segura.
--- -----------------------------------------------------
-
 DELIMITER $$
 CREATE PROCEDURE `sp_RegistrarVenta` (
     -- PARÁMETROS DE ENTRADA (Lo que recibe de Java)
@@ -333,83 +322,72 @@ BEGIN
     DECLARE nueva_venta_id INT;
     DECLARE asiento_id_actual INT;
     DECLARE precio_del_boleto DECIMAL(10,2);
-    DECLARE total_calculado DECIMAL(10,2) DEFAULT 0.00;
+    DECLARE total_final_real DECIMAL(10,2);
     
-    -- Variables para el bucle de asientos
+    -- Variables para el bucle de asientos (NUEVA LÓGICA DE CONTEO)
     DECLARE s_index INT DEFAULT 1;
-    DECLARE s_length INT;
-    DECLARE s_value VARCHAR(1000);
-
-    -- 1. MANEJADOR DE ERRORES
-    -- Si cualquier trigger (como el de capacidad) o INSERT falla,
-    -- se ejecutará este 'Handler' que deshará todo (ROLLBACK).
+    DECLARE num_boletos INT; -- Variable que guarda el número de boletos a insertar
+    
+    -- 1. MANEJADOR DE ERRORES (Se mantiene igual)
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
-        -- Retorna el mensaje de error
         SELECT 'Error: No se pudo registrar la venta. Operación cancelada.' AS Mensaje;
     END;
 
     -- 2. INICIAR LA TRANSACCIÓN
     START TRANSACTION;
     
-    -- 3. CREAR EL REGISTRO 'VENTA' (El ticket maestro)
+    -- 3. CREAR EL REGISTRO 'VENTA' (Se inserta con total 0.00)
     INSERT INTO Venta (fecha_venta, total_venta, Cliente_id_cliente, Empleado_id_empleado)
     VALUES (NOW(), 0.00, p_clienteID, p_empleadoID);
     
-    -- Guardamos el ID de la venta que acabamos de crear
     SET nueva_venta_id = LAST_INSERT_ID();
     
-    -- 4. BUCLE PARA INSERTAR LOS BOLETOS
-    -- Este bucle procesa el string "1,2,3"
-    SET s_value = p_asientosCSV;
-    SET s_length = LENGTH(s_value);
-
-    WHILE s_index <= s_length DO
-        -- Obtiene el ID del asiento (ej: "1" o "2" o "3")
-        SET asiento_id_actual = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(s_value, ',', s_index), ',', -1) AS UNSIGNED);
+    -- 4. BUCLE PARA INSERTAR LOS BOLETOS (Lógica de parsing robusta)
+    -- Calculamos el número exacto de ítems en el CSV (número de comas + 1)
+    SET num_boletos = LENGTH(p_asientosCSV) - LENGTH(REPLACE(p_asientosCSV, ',', '')) + 1;
+    
+    WHILE s_index <= num_boletos DO
+        
+        -- Obtiene el ID del asiento actual
+        SET asiento_id_actual = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_asientosCSV, ',', s_index), ',', -1) AS UNSIGNED);
         
         -- Llamamos a nuestra Función para saber el precio
         SET precio_del_boleto = fn_ObtenerPrecioBoleto(p_funcionID, asiento_id_actual);
         
-        -- Insertamos el boleto
-        -- AQUI SE DISPARAN TUS TRIGGERS:
-        -- 1. trg_ValidarCapacidad (podría fallar y activar el ROLLBACK)
-        -- 2. trg_ActualizarTotalVenta (actualizará el total en Venta)
+        -- Insertamos el boleto (AQUÍ SE DISPARA EL TRIGGER QUE ARREGLA LA VENTA.TOTAL_VENTA)
         INSERT INTO Boleto (precio_final, Funcion_id_funcion, Asiento_id_asiento, Venta_id_venta)
         VALUES (precio_del_boleto, p_funcionID, asiento_id_actual, nueva_venta_id);
         
-        -- Sumamos el precio al total
-        SET total_calculado = total_calculado + precio_del_boleto;
-        
-        -- Siguiente item en el bucle
         SET s_index = s_index + 1;
     END WHILE;
     
-    -- 5. INSERTAR EL PAGO
-    -- (Nota: El trigger ya actualizó el total_venta, pero usamos nuestro
-    -- total_calculado aquí para confirmar el monto del pago)
+    -- 5. LEER EL TOTAL CORREGIDO POR EL TRIGGER
+    -- Leemos el valor final y correcto que el Trigger ya calculó y guardó.
+    SELECT total_venta INTO total_final_real FROM Venta WHERE id_venta = nueva_venta_id; 
+
+    -- 6. INSERTAR EL PAGO (Usando el total final correcto)
     INSERT INTO Pago (monto, MetodoPago_id_metodoPago, Venta_id_venta)
-    VALUES (total_calculado, p_metodoID, nueva_venta_id);
+    VALUES (total_final_real, p_metodoID, nueva_venta_id);
     
-    -- 6. FINALIZAR LA TRANSACCIÓN
+    -- 7. FINALIZAR LA TRANSACCIÓN
     COMMIT;
     
-    -- 7. RETORNAR ÉXITO
+    -- 8. RETORNAR ÉXITO
     SELECT 
         'Venta registrada con éxito' AS Mensaje, 
         nueva_venta_id AS 'ID de Venta',
-        total_calculado AS 'Monto Total';
+        total_final_real AS 'Monto Total'; 
 
 END$$
 DELIMITER ;
-
 -- -----------------------------------------------------
 -- 11. PROCEDIMIENTO ALMACENADO (sp_CrearFuncion)
 -- -----------------------------------------------------
 -- Propósito: Inserta una nueva función en el sistema.
 -- -----------------------------------------------------
-
+/*
 DELIMITER $$
 CREATE PROCEDURE `sp_CrearFuncion` (
     IN p_titulo VARCHAR(45),
@@ -427,7 +405,7 @@ BEGIN
         (p_titulo, p_director, p_genero, p_duracion, p_fecha, p_hora, p_salaID);
 END$$
 DELIMITER ;
-
+*/
 
 -- -----------------------------------------------------
 -- 12. PROCEDIMIENTO ALMACENADO (sp_AsignarPrecio)
@@ -528,7 +506,17 @@ BEGIN
 END$$
 DELIMITER ;
 
+-- =========0====
+
+USE pia_teatro;
+
+-- 1. Modificar tabla Boleto para permitir boletos sin venta
+ALTER TABLE `Boleto` 
+MODIFY COLUMN `Venta_id_venta` INT NULL;
+
+-- 2. Crear el trigger
 -- 17 SP: Insertar en funcion
+
 DELIMITER $$
 
 CREATE PROCEDURE sp_CrearFuncion(
@@ -586,6 +574,8 @@ BEGIN
         p_hora_fun,
         p_id_sala
     );
+    
+    
 
     COMMIT;
 
