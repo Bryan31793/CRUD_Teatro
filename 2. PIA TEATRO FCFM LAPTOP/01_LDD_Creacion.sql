@@ -264,9 +264,25 @@ CREATE TABLE IF NOT EXISTS `pia_teatro`.`Factura` (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
+SET SQL_SAFE_UPDATES = 0;
+
+-- Agrega una llave única para asegurar que solo haya un precio por función y zona.
+ALTER TABLE PrecioZona 
+ADD CONSTRAINT UK_PrecioZona_Funcion_Zona UNIQUE (Funcion_id_funcion, Zona_id_zona);
+
+USE pia_teatro;
+
+-- Identifica y elimina las filas duplicadas dejando solo una (la más nueva, con el ID más alto)
+DELETE p1 FROM PrecioZona p1
+INNER JOIN PrecioZona p2
+WHERE 
+    p1.id_precio_zona < p2.id_precio_zona AND
+    p1.Funcion_id_funcion = p2.Funcion_id_funcion AND
+    p1.Zona_id_zona = p2.Zona_id_zona;
+    
+    
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
-
 
