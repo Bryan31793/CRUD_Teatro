@@ -7,7 +7,7 @@ USE pia_teatro;
 
 -- 1. POBLAR CATALOGOS (Tablas sin FK)
 -- -------------------------------------------------
-
+select * from Rol;
 INSERT INTO Rol (nombre_rol) VALUES 
 ('Vendedor'), 
 ('Administrador'), 
@@ -19,13 +19,14 @@ INSERT INTO MetodoPago (tipo) VALUES
 ('Transferencia Bancaria');
 
 INSERT INTO Sala (nombre_sala, capacidad) VALUES 
-('Sala Principal', 200), 
-('Sala Experimental', 100);
+('Sala Principal', 100), 
+('Sala Experimental', 70);
 
 -- 2. POBLAR DATOS DEPENDIENTES (Tablas con FK de Catálogos)
 -- -------------------------------------------------
 
 -- *** CAMBIO AQUÍ: 'Orquesta' por 'Platea' ***
+
 INSERT INTO Zona (nombre_zona, Sala_id_sala) VALUES 
 ('Platea', 1),       -- id_zona = 1 (se puede cambiar 'Platea' por otro nombre)
 ('Mezanine', 1),     -- id_zona = 2
@@ -69,21 +70,185 @@ INSERT INTO PrecioZona (precio, Funcion_id_funcion, Zona_id_zona) VALUES
 (250.00, 3, 4); -- Monólogo, General
 
 -- Asientos (Depende de Zona)
+select * from Asiento;
 INSERT INTO Asiento (fila, numero_asiento, Zona_id_zona) VALUES
-('A', 10, 1), -- id_asiento = 1 (Platea)
-('A', 11, 1), -- Agregado
-('A', 12, 1), -- Agregado
-('A', 13, 1), -- Agregado
-('M', 5, 2),  -- id_asiento = 2 (Mezanine)
-('M', 6, 2),  -- Agregado
-('M', 7, 2),  -- Agregado
-('G', 15, 4), -- id_asiento = 3 (General Experimental)
-('G', 16, 4), -- Agregado
-('G', 17, 4); -- Agregado
+('A', 1, 1),
+('A', 2, 1),
+('A', 3, 1),
+('A', 4, 1),
+('A', 5, 1),
+('A', 6, 1),
+('A', 7, 1),
+('A', 8, 1),
+('A', 9, 1),
+('A', 10, 1),
+('A', 11, 1),
+('A', 12, 1),
+('A', 13, 1),
+('A', 14, 1),
+('A', 15, 1),
+('A', 16, 1),
+('A', 17, 1),
+('A', 18, 1),
+('A', 19, 1),
+('A', 20, 1),
+('B', 1, 1),
+('B', 2, 1),
+('B', 3, 1),
+('B', 4, 1),
+('B', 5, 1),
+('B', 6, 1),
+('B', 7, 1),
+('B', 8, 1),
+('B', 9, 1),
+('B', 10, 1),
+('B', 11, 1),
+('B', 12, 1),
+('B', 13, 1),
+('B', 14, 1),
+('B', 15, 1),
+('B', 16, 1),
+('B', 17, 1),
+('B', 18, 1),
+('B', 19, 1),
+('B', 20, 1),
+('C', 1, 2),
+('C', 2, 2),
+('C', 3, 2),
+('C', 4, 2),
+('C', 5, 2),
+('C', 6, 2),
+('C', 7, 2),
+('C', 8, 2),
+('C', 9, 2),
+('C', 10, 2),
+('C', 11, 2),
+('C', 12, 2),
+('C', 13, 2),
+('C', 14, 2),
+('C', 15, 2),
+('C', 16, 2),
+('C', 17, 2),
+('C', 18, 2),
+('C', 19, 2),
+('C', 20, 2),
+('D', 1, 2),
+('D', 2, 2),
+('D', 3, 2),
+('D', 4, 2),
+('D', 5, 2),
+('D', 6, 2),
+('D', 7, 2),
+('D', 8, 2),
+('D', 9, 2),
+('D', 10, 2),
+('D', 11, 2),
+('D', 12, 2),
+('D', 13, 2),
+('D', 14, 2),
+('D', 15, 2),
+('D', 16, 2),
+('D', 17, 2),
+('D', 18, 2),
+('D', 19, 2),
+('D', 20, 2),
+('E', 1, 3),
+('E', 2, 3),
+('E', 3, 3),
+('E', 4, 3),
+('E', 5, 3),
+('E', 6, 3),
+('E', 7, 3),
+('E', 8, 3),
+('E', 9, 3),
+('E', 10, 3),
+('E', 11, 3),
+('E', 12, 3),
+('E', 13, 3),
+('E', 14, 3),
+('E', 15, 3),
+('E', 16, 3),
+('E', 17, 3),
+('E', 18, 3),
+('E', 19, 3),
+('E', 20, 3),
+('A', 1, 4),
+('A', 2, 4),
+('A', 3, 4),
+('A', 4, 4),
+('A', 5, 4),
+('A', 6, 4),
+('A', 7, 4),
+('A', 8, 4),
+('A', 9, 4),
+('A', 10, 4),
+('A', 11, 4),
+('A', 12, 4),
+('A', 13, 4),
+('A', 14, 4),
+('A', 15, 4),
+('A', 16, 4),
+('A', 17, 4),
+('A', 18, 4),
+('A', 19, 4),
+('A', 20, 4),
+('B', 1, 4),
+('B', 2, 4),
+('B', 3, 4),
+('B', 4, 4),
+('B', 5, 4),
+('B', 6, 4),
+('B', 7, 4),
+('B', 8, 4),
+('B', 9, 4),
+('B', 10, 4),
+('B', 11, 4),
+('B', 12, 4),
+('B', 13, 4),
+('B', 14, 4),
+('B', 15, 4),
+('B', 16, 4),
+('B', 17, 4),
+('B', 18, 4),
+('B', 19, 4),
+('B', 20, 4),
+
+('C', 1, 4),
+('C', 2, 4),
+('C', 3, 4),
+('C', 4, 4),
+('C', 5, 4),
+('C', 6, 4),
+('C', 7, 4),
+('C', 8, 4),
+('C', 9, 4),
+('C', 10, 4),
+('C', 11, 4),
+('C', 12, 4),
+('C', 13, 4),
+('C', 14, 4),
+('C', 15, 4),
+('C', 16, 4),
+('C', 17, 4),
+('C', 18, 4),
+('C', 19, 4),
+('C', 20, 4),
+('D', 1, 4),
+('D', 2, 4),
+('D', 3, 4),
+('D', 4, 4),
+('D', 5, 4),
+('D', 6, 4),
+('D', 7, 4),
+('D', 8, 4),
+('D', 9, 4),
+('D', 10, 4);
+
 
 -- 3. POBLAR TRANSACCIONES (Datos de prueba de ventas)
 -- -------------------------------------------------
-
+select * from Asiento;
+select * from Venta;
 -- VENTA 1 (Hecha por Vendedor 'cgomez', a Cliente 'Carlos Sánchez')
 INSERT INTO Venta (fecha_venta, total_venta, Cliente_id_cliente, Empleado_id_empleado) VALUES
 ('2025-11-07 14:30:00', 0.00, 1, 1); -- id_venta = 1

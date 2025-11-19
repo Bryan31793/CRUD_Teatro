@@ -32,6 +32,7 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS `pia_teatro`.`Zona` (
   `id_zona` INT NOT NULL AUTO_INCREMENT,
   `nombre_zona` VARCHAR(45) NOT NULL,
+  numero_asientos int,
   `Sala_id_sala` INT NOT NULL,
   PRIMARY KEY (`id_zona`),
   INDEX `fk_Zona_Sala_idx` (`Sala_id_sala` ASC) VISIBLE,
@@ -267,3 +268,5 @@ ENGINE = InnoDB;
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+
+

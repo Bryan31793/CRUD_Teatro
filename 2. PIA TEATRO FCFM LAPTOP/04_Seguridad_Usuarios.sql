@@ -20,6 +20,10 @@ CREATE USER 'app_taquilla'@'localhost' IDENTIFIED BY 'JavaPass123';
 -- 1. Permiso para "llamar" a los SP que hicimos:
 GRANT EXECUTE ON PROCEDURE pia_teatro.sp_BuscarFuncion TO 'app_taquilla'@'localhost';
 GRANT EXECUTE ON PROCEDURE pia_teatro.sp_RegistrarVenta TO 'app_taquilla'@'localhost';
+GRANT EXECUTE ON PROCEDURE pia_teatro.sp_CrearFuncion TO 'app_taquilla'@'localhost';
+
+FLUSH PRIVILEGES;
+
 
 -- 2. Permiso para "llamar" a las Funciones que hicimos:
 GRANT EXECUTE ON FUNCTION pia_teatro.fn_AsientosDisponibles TO 'app_taquilla'@'localhost';
