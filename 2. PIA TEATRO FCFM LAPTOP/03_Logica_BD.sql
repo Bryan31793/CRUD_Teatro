@@ -528,6 +528,94 @@ BEGIN
 END$$
 DELIMITER ;
 
+-- 17 SP: Insertar en funcion
+DELIMITER $$
+
+CREATE PROCEDURE sp_CrearFuncion(
+    IN p_titulo_funcion   VARCHAR(100),
+    IN p_director         VARCHAR(45),
+    IN p_genero           VARCHAR(45),
+    IN p_duracion_minutos INT,
+    IN p_fecha_fun        DATE,
+    IN p_hora_fun         TIME,
+    IN p_id_sala          INT
+)
+BEGIN
+    -- Manejo de errores: si algo falla, hacemos rollback
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SELECT 'Error: No se pudo registrar la función' AS mensaje;
+    END;
+
+    START TRANSACTION;
+
+    -- Validaciones básicas
+    IF p_titulo_funcion IS NULL OR p_titulo_funcion = '' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'El título de la función no puede estar vacío.';
+    END IF;
+
+    IF p_id_sala IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Debe seleccionar una sala existente.';
+    END IF;
+
+    -- Verificar que la sala existe
+    IF NOT EXISTS (SELECT 1 FROM Sala WHERE id_sala = p_id_sala) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'La sala indicada no existe.';
+    END IF;
+
+    -- Insertar la nueva función
+    INSERT INTO Funcion(
+        titulo_funcion,
+        director,
+        genero,
+        duracion_minutos,
+        fecha_fun,
+        hora_fun,
+        Sala_id_sala
+    )
+    VALUES (
+        p_titulo_funcion,
+        p_director,
+        p_genero,
+        p_duracion_minutos,
+        p_fecha_fun,
+        p_hora_fun,
+        p_id_sala
+    );
+
+    COMMIT;
+
+    SELECT 'Función registrada correctamente' AS mensaje;
+END $$
+
+DELIMITER ;
+
+-- trigger despues de SP 17
+DELIMITER $$
+
+CREATE TRIGGER trg_generar_boletos
+AFTER INSERT ON Funcion
+FOR EACH ROW
+BEGIN
+    -- Insertar un boleto por cada asiento de la sala donde será la función
+    INSERT INTO Boleto (precio_final, Funcion_id_funcion, Asiento_id_asiento)
+    SELECT 
+        pz.precio AS precio_final,
+        NEW.id_funcion AS Funcion_id_funcion,
+        a.id_asiento AS Asiento_id_asiento
+    FROM Zona z
+    INNER JOIN Asiento a ON a.Zona_id_zona = z.id_zona
+    INNER JOIN PrecioZona pz ON pz.Zona_id_zona = z.id_zona
+                           AND pz.Funcion_id_funcion = NEW.id_funcion
+    WHERE z.Sala_id_sala = NEW.Sala_id_sala;
+END$$
+
+DELIMITER ;
+
 
 -- Prueba del SP de Venta:
 -- (Cliente 1, Empleado 1, MetodoPago 2, Funcion 2, Asientos "1,2")

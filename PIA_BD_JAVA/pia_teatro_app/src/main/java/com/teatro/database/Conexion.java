@@ -9,6 +9,7 @@ public class Conexion {
     // Tus credenciales de la base de datos
     // Usamos el usuario LIMITADO que creamos por seguridad
     private static final String URL = "jdbc:mysql://localhost:3306/pia_teatro";
+    //private static final String USUARIO = "app_taquilla";
     private static final String USUARIO = "app_taquilla";
     private static final String CONTRASENA = "JavaPass123"; // (O la que pusiste en el script 04)
 

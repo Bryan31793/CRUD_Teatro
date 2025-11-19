@@ -17,6 +17,7 @@ public class MenuPrincipal extends JFrame {
     private JButton btnReportes;
     private JButton btnAdminFunciones;
     private JButton btnGestionarEmpleados; // <-- NUEVO BOTÓN
+    private JButton btnAgregarObras;    // < -- nueva funcionalidad
     private JLabel lblBienvenido;
 
     /**
@@ -67,6 +68,12 @@ public class MenuPrincipal extends JFrame {
         btnGestionarEmpleados.setFont(new Font("Arial", Font.PLAIN, 16));
         add(btnGestionarEmpleados);
 
+        // boton 5: agregar obras (insertar)
+        btnAgregarObras = new JButton("Agregar Obra");
+        btnAgregarObras.setBounds(300, 380, 200, 50);
+        btnAgregarObras.setFont(new Font("Arial", Font.PLAIN, 16));
+        add(btnAgregarObras);
+
         // --- LÓGICA DE ROLES (El requisito clave) ---
         aplicarPermisos(idRol);
 
@@ -101,6 +108,14 @@ public class MenuPrincipal extends JFrame {
             }
         });
 
+        // accion para el boton Agregar obra
+        btnAgregarObras.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                abrirModuloObras();
+            }
+        });
+
 
     }
 
@@ -125,6 +140,7 @@ public class MenuPrincipal extends JFrame {
             btnReportes.setVisible(true);
             btnAdminFunciones.setVisible(true);
             btnGestionarEmpleados.setVisible(false); // No puede gestionar
+            btnAgregarObras.setVisible(false);
             
         } else if (idRol == 3) { // Director
             
@@ -133,6 +149,7 @@ public class MenuPrincipal extends JFrame {
             btnReportes.setVisible(true);
             btnAdminFunciones.setVisible(true);
             btnGestionarEmpleados.setVisible(true);
+            btnAgregarObras.setVisible(true);
             
         } else {
             // Seguridad por si acaso
@@ -168,6 +185,13 @@ public class MenuPrincipal extends JFrame {
     private void abrirModuloEmpleados() {
         AdminEmpleados ventanaEmp = new AdminEmpleados();
         ventanaEmp.setVisible(true);
+    }
+
+    private void abrirModuloObras() {
+        //aqui va la nueva clase para insertar obras
+        AdminObras ventanaObras = new AdminObras();
+        ventanaObras.setVisible(true);
+
     }
 
 }
