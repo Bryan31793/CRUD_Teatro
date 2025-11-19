@@ -350,4 +350,3 @@ WHERE
     
 -- comprobamos que trigger funcione
 -- SELECT * FROM Venta; */
-
