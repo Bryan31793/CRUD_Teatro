@@ -1,4 +1,7 @@
 /*
+
+EJECUTAR PRIMERO SCRIPTS 01, 03, 02 Y 04
+
 SCRIPT 04: Seguridad (Usuarios y Permisos)
 Descripción: Crea los usuarios del servidor MySQL y les
              asigna los permisos necesarios para operar.
@@ -44,6 +47,7 @@ GRANT SELECT ON pia_teatro.MetodoPago TO 'app_taquilla'@'localhost';
 GRANT SELECT ON pia_teatro.Asiento TO 'app_taquilla'@'localhost';
 GRANT SELECT ON pia_teatro.Zona TO 'app_taquilla'@'localhost';
 GRANT SELECT ON pia_teatro.Boleto TO 'app_taquilla'@'localhost'; -- (Necesario para ver asientos disponibles)
+GRANT SELECT ON pia_teatro.PrecioZona TO 'app_taquilla'@'localhost';
 
 -- 5. Permiso para que el Login pueda LEER la tabla Empleado
 GRANT SELECT ON pia_teatro.Empleado TO 'app_taquilla'@'localhost';
@@ -82,5 +86,8 @@ GRANT EXECUTE ON PROCEDURE pia_teatro.sp_EliminarEmpleado TO 'app_taquilla'@'loc
 
 -- También necesitamos permiso para leer la tabla Rol (para llenar el combo de roles)
 GRANT SELECT ON pia_teatro.Rol TO 'app_taquilla'@'localhost';
+
+-- Permiso necesario para que el Módulo de Reportes pueda calcular las estadísticas SUM y COUNT
+GRANT SELECT ON pia_teatro.Venta TO 'app_taquilla'@'localhost';
 
 CALL sp_VerEmpleados();
